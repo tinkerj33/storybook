@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>The Story Book</title>
+<style>
+body {
+  font-family: sans-serif;
+  margin: 0;
+  padding: 0;
+}
+
+.header {
+  text-align: center;
+  background-color: lightblue;
+  padding: 20px;
+  margin-bottom: 20px;
+}
+
+.navbar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 200px;
+  height: 100%;
+  background-color: lightblue;
+  overflow-y: scroll;
+}
+
+.navbar a {
+  display: block;
+  padding: 10px 15px;
+  text-decoration: none;
+  color: black;
+}
+
+.navbar a:hover {
+  background-color: white;
+}
+
+.content {
+  margin-left: 200px;
+}
+
+.message {
+  text-align: center;
+  display: none; /* Hide the message initially */
+}
+
+.Stry {
+  margin: 20px;
+  padding: 10px;
+  background-color: #f2f2f2;
+}
+
+.loading-animation {
+  display: none; /* Hide the loading animation initially */
+  text-align: center;
+  margin-top: 20px;
+}
+
+.loading-animation span {
+  animation: loading 1s infinite linear;
+}
+
+@keyframes loading {
+  0% { content: '.'; }
+  25% { content: '..'; }
+  50% { content: '...'; }
+  75% { content: '....'; }
+}
+
+.input-section {
+  margin-top: 20px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.input-section input[type="text"] {
+  margin-right: 10px;
+  padding: 10px;
+  font-size: 16px;
+  border: 1px solid lightgray;
+  border-radius: 4px;
+  width: 300px;
+  outline: none;
+  transition: box-shadow 0.3s;
+}
+
+.input-section input[type="text"]:focus {
+  box-shadow: 0 0 5px dodgerblue;
+}
+
+.input-section input[type="submit"] {
+  padding: 5px 10px;
+  height: 32px; /* Set the desired height */
+  background-color: green; /* Set the desired background color */
+  color: white; /* Set the desired text color */
+  border: none; /* Remove the border */
+  box-shadow: none; /* Remove the box shadow */
+}
+
+
+</style>
+</head>
+<body>
+<div class="header">
+  <h1>The Story Book</h1>
+</div>
+<div class="navbar">
+  <a href="#" onclick="generateStory(1)">Grade 1</a>
+  <a href="#" onclick="generateStory(2)">Grade 2</a>
+  <a href="#" onclick="generateStory(3)">Grade 3</a>
+  <a href="#" onclick="generateStory(4)">Grade 4</a>
+  <a href="#" onclick="generateStory(5)">Grade 5</a>
+</div>
+<div class="content">
+  <div class="message">You are in Grade: <span id="grade"></span></div>
+  <div id="StryContainer" style="display: none;">
+    <div class="Stry">
+      <h2>Story:</h2>
+      <p id="StryText"></p>
+    </div>
+  </div>
+  <div class="loading-animation">
+    <span>Generating story....</span>
+  </div>
+  <div class="input-section">
+    <input type="text" id="userInput" placeholder="Enter your text">
+    <input type="submit" value="Generate" onclick="addUserInput()">
+  </div>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+<script>
+var grade = 1;
+var minYear = 1920;
+var maxYear = 2023;
+
+// Generate a random number between minYear and maxYear
+var randomNumber = Math.floor(Math.random() * (maxYear - minYear + 1)) + minYear;
+
+function showLoadingAnimation() {
+  var loadingAnimation = document.getElementsByClassName("loading-animation")[0];
+  loadingAnimation.style.display = "block";
+}
+
+function hideLoadingAnimation() {
+  var loadingAnimation = document.getElementsByClassName("loading-animation")[0];
+  loadingAnimation.style.display = "none";
+}
+
+function generateStory(selectedGrade) {
+  var StryText = document.getElementById("StryText");
+  StryText.innerHTML = "";
+  grade = selectedGrade;
+  // Generate a random number between minYear and maxYear
+  randomNumber = Math.floor(Math.random() * (maxYear - minYear + 1)) + minYear;
+  document.getElementById("grade").innerText = grade;
+  document.getElementsByClassName("message")[0].style.display = "block"; // Show the message after selecting a grade
+  
+  var prompt = `
+    Generate a fiction story under 200 words long for grade ${grade} student. The story should take place in the year ${randomNumber}. 
+    Ask an indirect question based on the story. Format the output in HTML so that the story and question are in two <p> sections. The question should be bolded.
+  `;
+  
+  showLoadingAnimation();
+  
+  axios.post('https://api.openai.com/v1/completions', {
+    model: "text-davinci-003",
+    prompt: prompt,
+    max_tokens: 300,
+    temperature: 0
+  }, {
+    headers: {
+      'Authorization': 'Bearer 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',
+      'Content-Type': 'application/json',
+      'Accept': 'application/json'
+    }
+  })
+  .then(function (response) {
+    var Story = response.data.choices[0].text.trim();
+    console.log(Story);
+    var messageElement = document.getElementsByClassName("message")[0];
+    var StryContainer = document.getElementById("StryContainer");
+    
+    StryText.innerHTML = Story;
+    
+    messageElement.style.display = "none";
+    StryContainer.style.display = "block";
+    
+    hideLoadingAnimation();
+  })
+  .catch(function (error) {
+    console.error(error);
+    alert("An error occurred while generating the Story. Please try again.");
+    hideLoadingAnimation();
+  });
+}
+
+function addUserInput() {
+  var StryText = document.getElementById("StryText");
+  var userInput = document.getElementById("userInput").value;
+  var prompt = `
+    Generate a fiction story under 200 words long for grade ${grade} student. Story should take place in the year ${randomNumber}. 
+    Ask an indirect question based on the story. Format the output in HTML so that the story and question are in two <p> sections. The question should be bolded.
+    
+    User Input: ${userInput}
+  `;
+  
+  showLoadingAnimation();
+  
+  axios.post('https://api.openai.com/v1/completions', {
+    model: "text-davinci-003",
+    prompt: prompt,
+    max_tokens: 300,
+    temperature: 0
+  }, {
+    headers: {
+      'Authorization': 'Bearer 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',
+      'Content-Type': 'application/json',
+      'Accept': 'application/json'
+    }
+  })
+  .then(function (response) {
+    var Story = response.data.choices[0].text.trim();
+    console.log(Story);
+    var messageElement = document.getElementsByClassName("message")[0];
+    var StryContainer = document.getElementById("StryContainer");
+    
+    StryText.innerHTML = Story;
+    
+    messageElement.style.display = "none";
+    StryContainer.style.display = "block";
+    
+    hideLoadingAnimation();
+  })
+  .catch(function (error) {
+    console.error(error);
+    alert("An error occurred while generating the Story. Please try again.");
+    hideLoadingAnimation();
+  });
+}
+</script>
+</body>
+</html>
